@@ -99,3 +99,27 @@ You are telling the computer:
 "Finally, give me the specific connector piece to make Vulkan work on Wayland." (vulkan_wayland.h)
 
 By including all of these, your program has all the necessary parts and permissions to start the complex process of building a Vulkan application that opens a window on a Linux system running Wayland.
+
+
+
+
+
+The "Vulkan Error Checker" Macro
+c
+do {                                                                         
+    VkResult result_ = call;                                                   
+    assert(result_ == VK_SUCCESS);                                             
+  } while (0)
+This is a fancy, self-contained tool for checking if Vulkan function calls worked.
+
+What it does: Almost every Vulkan function (like vkCreateInstance) returns a value of type VkResult. This value tells you if the function succeeded (VK_SUCCESS) or failed (an error code like VK_ERROR_OUT_OF_HOST_MEMORY).
+
+This macro is a neat way to automatically check that result and crash the program immediately if something failed.
+
+Let's translate it line by line:
+
+do { ... } while (0): This is a trick to create a single, contained block of code. It ensures the macro works correctly if you use it inside an if statement.
+
+VkResult result_ = call;: This runs the Vulkan function you tell it to (the call) and stores its return value in a temporary variable named result_.
+
+assert(result_ == VK_SUCCESS);: This is the safety check. It asserts, "I expect the result to be VK_SUCCESS!" If it's not, the program crashes and tells you which assertion failed. This is incredibly useful for catching errors early.
