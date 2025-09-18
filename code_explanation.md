@@ -1,4 +1,4 @@
-# #include <assert.h>      // For assert() - crashes program if condition is false
+## #include <assert.h>      // For assert() - crashes program if condition is false
 
 #include <stdbool.h>     // For bool, true, false
 
