@@ -3,13 +3,14 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan_core.h>
+#define VOLK_IMPLEMENTATION
+#define VK_NO_PROTOTYPES
+#include "external/volk/volk.h"
+
 #define GGLFW_INCLUDE_VULKAN
 #define GLFW_EXPOSE_NATIVE_WAYLAND
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
-#include <vulkan/vulkan_wayland.h>
 #define u32 uint32_t
 #define VK_CHECK(call) \
 do { \
@@ -19,6 +20,7 @@ do { \
 #define ARRAYSIZE(array) (sizeof(array) / sizeof((array)[0]))
 
 int main() {
+	volkInitialize() ;
     int rc = glfwInit();
     assert(rc);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -58,7 +60,8 @@ int main() {
     
     VkInstance instance;
     VK_CHECK(vkCreateInstance(&createInfo, 0, &instance));
-    
+   volkLoadInstance(instance); 
+
     VkPhysicalDevice physicalDevices[8];
     u32 physicalDeviceCount = ARRAYSIZE(physicalDevices);
     VK_CHECK(vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices));
@@ -130,21 +133,11 @@ int main() {
     };
     
     VkDevice device;
-    PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR;
-PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR;
     VK_CHECK(vkCreateDevice(selectedPhysicalDevice, &deviceCreateInfo, 0, &device));
-    vkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR)vkGetDeviceProcAddr(device, "vkCmdBeginRenderingKHR");
-vkCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetDeviceProcAddr(device, "vkCmdEndRenderingKHR");
-assert(vkCmdBeginRenderingKHR != NULL);
-assert(vkCmdEndRenderingKHR != NULL);
     // surface creation
-    VkWaylandSurfaceCreateInfoKHR surfacecreateInfo = {
-        VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR};
-    surfacecreateInfo.display = glfwGetWaylandDisplay();
-    surfacecreateInfo.surface = glfwGetWaylandWindow(window);
     
     VkSurfaceKHR surface = 0;
-    VK_CHECK(vkCreateWaylandSurfaceKHR(instance, &surfacecreateInfo, 0, &surface));
+	VK_CHECK(glfwCreateWindowSurface(instance, window, 0, &surface));
     
     VkBool32 presentSupported = 0;
     VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(selectedPhysicalDevice, queuefamilyIndex, surface, &presentSupported));
