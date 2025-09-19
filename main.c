@@ -19,6 +19,36 @@ do { \
 } while (0)
 #define ARRAYSIZE(array) (sizeof(array) / sizeof((array)[0]))
 
+
+
+VkShaderModule LoadShaderModule(const char* filepath, VkDevice device)
+{
+	FILE* file = fopen(filepath, "rb");
+	assert(file);
+
+	fseek(file, 0, SEEK_END);
+	long length = ftell(file);
+	assert(length >= 0);
+	fseek(file, 0, SEEK_SET);
+
+	char* buffer = (char*)malloc(length);
+	assert(buffer);
+
+	size_t rc = fread(buffer, 1, length, file);
+	assert(rc == (size_t)length);
+	fclose(file);
+
+	VkShaderModuleCreateInfo createInfo = {0};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = length;
+	createInfo.pCode = (const u32*)buffer;
+
+	VkShaderModule shaderModule;
+	VK_CHECK(vkCreateShaderModule(device, &createInfo, NULL, &shaderModule));
+
+	free(buffer);
+	return shaderModule;
+}
 int main() {
 	volkInitialize() ;
     int rc = glfwInit();
@@ -219,50 +249,6 @@ int main() {
       VK_CHECK(vkCreateImageView(device, &imageViewInfo, NULL, &swapchainImageViews[i]));
     }
     
-  
-    
-    VkShaderModule triangleVS;
-    {
-      FILE *file = fopen("shaders/tri.vert.spv", "rb");
-      assert(file);
-      fseek(file, 0, SEEK_END);
-      long length = ftell(file);
-      assert(length >= 0);
-      fseek(file, 0, SEEK_SET);
-      char *buffer = (char *)malloc(length);
-      assert(buffer);
-      size_t rc = fread(buffer, 1, length, file);
-      assert(rc == (size_t)length);
-      fclose(file);
-      VkShaderModuleCreateInfo createInfo = {0};
-      createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-      createInfo.codeSize = length;
-      createInfo.pCode = (const uint32_t *)buffer;
-      VK_CHECK(vkCreateShaderModule(device, &createInfo, NULL, &triangleVS));
-      free(buffer);
-    }
-    
-    VkShaderModule triangleFS;
-    {
-      FILE *file = fopen("shaders/tri.frag.spv", "rb");
-      assert(file);
-      fseek(file, 0, SEEK_END);
-      long length = ftell(file);
-      assert(length >= 0);
-      fseek(file, 0, SEEK_SET);
-      char *buffer = (char *)malloc(length);
-      assert(buffer);
-      size_t rc = fread(buffer, 1, length, file);
-      assert(rc == (size_t)length);
-      fclose(file);
-      VkShaderModuleCreateInfo createInfo = {0};  // Changed from {1} to {0}
-      createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-      createInfo.codeSize = length;
-      createInfo.pCode = (const uint32_t *)buffer;
-      VK_CHECK(vkCreateShaderModule(device, &createInfo, NULL, &triangleFS));
-      free(buffer);
-    }
-    
     VkPipelineLayout pipelinelayout;
     VkPipelineLayoutCreateInfo pipelinecreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -285,7 +271,9 @@ int main() {
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .module = triangleVS,
+            //todo 
+
+			.module = LoadShaderModule(
             .pName = "main",
         },
         {
